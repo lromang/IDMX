@@ -70,19 +70,31 @@ most_simil <- function(char1, char2){
 ##---------------------------------
 ###################################################
 most_simil_mult <- function(char, bag){
-    ## Devuelve un vector con los elementos más parecidos al caracter de entrada.
+    ##--------------------------------------------------------------
+    ## Devuelve una lista con los siguientes elementos:
+    ## 1.- Índice máximo de similitud entre bag y char.
+    ## 2.- El caracter dentro de bag que alcanzó dicho índice.
+    ## 3.- El índice de dicho caracter.
+    ##--------------------------------------------------------------
     ## Primera Iteración, los que tienen los elementos más parecidos.
-    simil <- laply(bag, function(t)t <- (1-stringdist(char, t, method = "jaccard", q = 1)))
-    res <-
+    simil   <- laply(bag, function(t)t <- (1 - stringdist(char,
+                                                        t,
+                                                        method = "jaccard",
+                                                        q = 1)))
+    indexes <- which(simil == max(simil))
+    res_1   <-
     list(simil = max(simil),
-         char  = unique(bag[which(simil == max(simil))]))
+         char  = unique(bag[indexes]))
     ## Segunda Iteración, combinación de distancias.
-    simil <- laply(res[[2]], function(t)t <- most_simil(char, t))
+    simil <- laply(res_1[[2]],
+                  function(t)t <- most_simil(char, t))
     index <- which(simil == max(simil))[1]
-    res <-
+    char  <- res_1[[2]][index]
+    index <- indexes[index]
+    res   <-
         list(simil = max(simil),
              index = index,
-             char  = res[[2]][index])
+             char  = char)
     ## Devolvemos resultados
     res
 }
@@ -150,10 +162,18 @@ date_pre_proc <- function(date){
 ###################################################
 transform.date <- function(date, dates = date_base){
     date <- date_pre_proc(date)
-    list("date1" = head(most_simil_mult(date$date1, dates)$char, 1),
-         "date2" = head(most_simil_mult(date$date2, dates)$char, 1)
+    list("possible_date1" = head(most_simil_mult(date$date1, dates)$char, 1),
+         "possible_date2" = head(most_simil_mult(date$date2, dates)$char, 1)
          )
 }
+
+
+####################################################
+################ PRUEBA SECCIÓN 1 ##################
+transform.date("10 de enero 2015")
+transform.date("12/dic/2014")
+transform.date("12/15/2004")
+
 
 ####################################################
 ############## Sección 2: ENTIDADES ################
@@ -197,106 +217,70 @@ entities <- list(
 )
 
 full_ent <- read.csv(
-    "data/coords.csv",
+    "https://raw.githubusercontent.com/lromang/IDMX/master/data/coords.csv",
     stringsAsFactors = FALSE,
     header = TRUE,
-    encoding = "UTF-8",
-    colClasses = c(
-        "character", "character", "character", "character",
-        "character", "character", "numeric", "numeric",
-        "numeric", "numeric"
-    )
+    colClasses = rep("character", 6),
+    encoding = "UTF-8"
 )
 
 ###################################################
 ##---------------------------------
-## transform.entity
+## transform.all
 ##---------------------------------
 ###################################################
-transform.entity <- function(entity, bag_entities = entities){
-    ## Recibe una entidad federativa y la transforma a su clave INEGI
-    ## y nombre más probable.
-    ## IN
-    ## df: data.frame de la que se quieren verificar las columnas
-    ## OUT
-    ## variable booleana que identifica a las columnas que sobrepasan thresh.
-    ## bolsa de entidades
-
-    off_entities <- tolower(unlist(bag_entities))
-    ## Obtener la entidad que se parece más
-    most_like <- most_simil_mult(tolower(entity), off_entities)$char
-    ## Obtener índice
-    clave <- names(bag_entities)[laply(bag_entities, function(t){ t <- most_like %in% tolower(t)})]
-    list("clave" = clave, "Entidad" = bag_entities[clave][[1]][1])
-}
-
-###################################################
-##---------------------------------
-## transform.mun
-##---------------------------------
-###################################################
-transform.mun <- function(entity, mun, loc, bag_entities = entities, full_bag = full_ent){
-    ## Recibe una entidad federativa y un municipio y
-    ## los transforma a su clave INEGI
-    ## y nombre más probable, dada esa entidad federativa.
+transform.all <- function(entity, mun = NA,
+                         loc = NA, bag_entities = entities,
+                         full_bag = full_ent){
+    ##--------------------------------------------------------------
+    ## Recibe una entidad federativa y opcionalment un municipio y una localidad
+    ## los transforma a su clave INEGI  y nombre más probable, dada esa entidad federativa.
     ## IN
     ## entity: Entidad federativa la cual se quiere transformar.
-    ## mun: Municipio el cual se quiere transformar
+    ## mun: Municipio el cual se quiere transformar.
+    ## loc: Localidad la cual se quiere transformar.
     ## OUT
-    ## variable booleana que identifica a las columnas que sobrepasan thresh.
-    ## bolsa de entidades
-    off_entities <- tolower(unlist(bag_entities))
-
-    ## Obtener la entidad que se parece más
-    most_like <- most_simil_mult(tolower(entity), off_entities)$char
-
-    ## Obtener índice entidad
-    clave <- names(bag_entities)[laply(bag_entities, function(t){t <- most_like %in% tolower(t)})]
-
-    ## Obtener municipio al que se parece más
-    filt_mun      <- dplyr::filter(full_bag, ENTIDAD == clave)
-    most_like_mun <- most_simil_mult(tolower(mun), unique(filt_mun$NOM_MUN))$index
-
-    ## Obtener clave y nombre municipio
-    mun_name <- filt_mun$NOM_MUN[most_like_mun]
-    mun_key  <- filt_mun$MUN[most_like_mun]
-
-    ## Obtener localidad a la que se parece más
-    filt_mun_loc  <- dplyr::filter(filt_mun, MUN == mun_key)
-    most_like_loc <- most_simil_mult(tolower(loc), unique(filt_mun$NOM_LOC))$index
-
-    ## Obtener clave y nombre municipio
-    loc_name <- filt_mun$NOM_MUN[most_like_mun]
-    loc_key  <- filt_mun$MUN[most_like_mun]
-
+    ## data.frame con la clasificación correspondiente
+    ##--------------------------------------------------------------
+    mun_name <- NA
+    mun_key  <- NA
+    loc_name <- NA
+    loc_key  <- NA
+    off_entities  <- tolower(unlist(bag_entities))
+    ## Obtener la entidad que se parece más.
+    most_like     <- most_simil_mult(tolower(entity), off_entities)$char
+    ## Obtener índice entidad.
+    clave         <- names(bag_entities)[laply(bag_entities,
+                                              function(t){t <- most_like %in% tolower(t)})]
+    ## Obtener municipio al que se parece más, en caso de que haya.
+    if(!is.na(mun)){
+        filt_mun      <- dplyr::filter(full_bag, ENTIDAD == clave)
+        most_like_mun <- most_simil_mult(tolower(mun), unique(filt_mun$NOM_MUN))$index
+        ## Obtener clave y nombre municipio
+        mun_name <- unique(filt_mun$NOM_MUN)[most_like_mun]
+        mun_key  <- filt_mun$MUN[filt_mun$NOM_MUN == mun_name][1]
+        ## Obtener localidad a la que se parece más, en caso de que haya.
+        if(!is.na(loc)){
+            filt_mun_loc  <- dplyr::filter(filt_mun, MUN == mun_key)
+            most_like_loc <- most_simil_mult(tolower(loc), unique(filt_mun_loc$NOM_LOC))$index
+            ## Obtener clave y nombre municipio
+            loc_name <- unique(filt_mun_loc$NOM_LOC)[most_like_loc]
+            loc_key  <- filt_mun_loc$LOC[filt_mun_loc$NOM_LOC == loc_name][1]
+        }
+    }
     ## Regresar resultados
-    list("clave" = clave, "Entidad" = bag_entities[clave][[1]][1])
+    data.frame("entidad"         = bag_entities[clave][[1]][1],
+               "clave_entidad"   = clave,
+               "municipio"       = mun_name,
+               "clave_municipio" = mun_key,
+               "localidad"       = loc_name,
+               "clave_localidad" = loc_key
+               )
 }
 
-
-###################################################
-##---------------------------------
-## transform.loc
-##---------------------------------
-###################################################
-
-
-###################################################
-##---------------------------------
-## add.entity.col
-##---------------------------------
-###################################################
-add.entity <- function(key, string, bag_entities){
-    bag_entities[key][[1]] <-
-        c(bag_entities[key][[1]],string)
-    bag_entities
-}
-
-###################################################
-##---------------------------------
-## transform.entity.col
-##---------------------------------
-###################################################
-transform.entity.col <- function(col){
-    ldply(col, transform.entity)[, 1]
-}
+####################################################
+################ PRUEBA SECCIÓN 2 ##################
+transform.all("CAMPECHE")
+transform.all("mchcan")
+transform.all("oxc", "sn. agst. chayu")
+transform.all("oxc", "sn. agst. chayu", "col. sn. flipe")
