@@ -1,30 +1,38 @@
 ###################################################
-## Las rutinas en este script, tienen como finalidad
-## automatizar el proceso de validación de datos.
-## Se revisan distintos tipos de datos como fechas,
-## entidades federativas y coordenadas.
+## This script provides several tools which enable
+## the automatization of the processes of data
+## integrity verification.
 ###################################################
 
 
 ###################################################
-## Librerías utilizadas
+## Libraries
 ###################################################
+## Manipulate dates
 suppressPackageStartupMessages(library(lubridate))
+## Manipulate strings
+suppressPackageStartupMessages(library(stringr))
+suppressPackageStartupMessages(library(stringdist))
+## Manipulate data
 suppressPackageStartupMessages(library(plyr))
 suppressPackageStartupMessages(library(dplyr))
-suppressPackageStartupMessages(library(stringr))
-suppressPackageStartupMessages(library(xlsx))
-suppressPackageStartupMessages(library(stringdist))
 suppressPackageStartupMessages(library(tidyr))
-suppressPackageStartupMessages(library(readxl))
 suppressPackageStartupMessages(library(data.table))
+## Graphics
+suppressPackageStartupMessages(library(ggplot2))
+## Read in data
+suppressPackageStartupMessages(library(gdata))
+suppressPackageStartupMessages(library(readxl))
+suppressPackageStartupMessages(library(xlsx))
+suppressPackageStartupMessages(library(foreign))
+## Display dashboard
+suppressPackageStartupMessages(library(shinydashboard))
+suppressPackageStartupMessages(library(shiny))
 
-
-###################################################
 
 ###################################################
 ##---------------------------------
-## Funciones
+## Functions
 ##---------------------------------
 ###################################################
 
@@ -34,30 +42,27 @@ suppressPackageStartupMessages(library(data.table))
 ##---------------------------------
 ###################################################
 most_simil <- function(char1, char2){
-    ## Identifica similaridad entre caracteres usando diversas métricas
-    ## OSA (Restricted Damerau-Levenshtein): inserciones, eliminaciones,
-    ## reemplazos y transposiciones pero cada subcadena sólo puede ser
-    ## editada una vez.
-    ## LV (Levenshtein): inserciones, eliminaciones y reemplazos.
-    ## DL (FULL Damerau-Levenshtein): inserciones, eliminaciones,
-    ## reemplazos y transposiciones (menor o igual a Levenshtein).
-    ## LCS: subcadena de caracteres más larga en común
+    ##-------------------------------------------------------------------
+    ## Identifies similiarites between characters using several metrics
+    ## OSA (Restricted Damerau-Levenshtein): insertions, erasures,
+    ## replacements and transpositions. Each substring can be edited at
+    ## most once.
+    ## LV (Levenshtein): insertions, erasures and replacements.
+    ## DL (FULL Damerau-Levenshtein): insertions, erasures,
+    ## replacements and transpositions (less or equal than Levenshtein).
+    ## LCS: longest common substring
+    ##-------------------------------------------------------------------
     max_str_length <- max(str_length(char1), str_length(char2))
     max_unique_length <- max(
         length(unique(str_split(char1, "")[[1]])),
         length(unique(str_split(char2, "")[[1]]))
     )
-    ## Elección de una q razonable: en fechas 3
-    ## PENDIENTE
-    ## hagamos que todas las métricas estén entre 0,1
+    ## Set all metrics between  0 and 1.
     res <-     list(
         osa       = 1 - stringdist(char1, char2, method = "osa") / max_str_length,
         lv        = 1 - stringdist(char1, char2, method = "lv")  / max_str_length,
         dl        = 1 - stringdist(char1, char2, method = "dl")  / max_str_length,
         lcs       = 1 - stringdist(char1, char2, method = "lcs") / max_str_length,
-        ## Es necesario usar el máximo con 0
-        ## ya que cuando alguna de las cadenas es
-        ## vacía, se va a -Inf.
         cosine    = max(1 - stringdist(char1, char2, method = "cosine", q = 3),0),
         jaccard   = max(1 - stringdist(char1, char2, method = "jaccard", q = 3),0)
     )
@@ -170,9 +175,9 @@ transform.date <- function(date, dates = date_base){
 
 ####################################################
 ################ PRUEBA SECCIÓN 1 ##################
-transform.date("10 de enero 2015")
-transform.date("12/dic/2014")
-transform.date("12/15/2004")
+## transform.date("10 de enero 2015")
+## transform.date("12/dic/2014")
+## transform.date("12/15/2004")
 
 
 ####################################################
@@ -280,7 +285,7 @@ transform.all <- function(entity, mun = NA,
 
 ####################################################
 ################ PRUEBA SECCIÓN 2 ##################
-transform.all("CAMPECHE")
-transform.all("mchcan")
-transform.all("oxc", "sn. agst. chayu")
-transform.all("oxc", "sn. agst. chayu", "col. sn. flipe")
+## transform.all("CAMPECHE")
+## transform.all("mchcan")
+## transform.all("oxc", "sn. agst. chayu")
+## transform.all("oxc", "sn. agst. chayu", "col. sn. flipe")
