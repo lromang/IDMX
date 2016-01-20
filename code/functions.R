@@ -107,8 +107,8 @@ most_simil_mult <- function(char, bag){
 ###################################################
 ############### Sección 1: FECHAS #################
 ###################################################
-## Código que identifica, revisa y corrige fechas
 ###################################################
+
 ## Base de fechas correctas
 date_base <- seq(as.Date("1980-01-01"),
                 today(),
@@ -183,9 +183,9 @@ transform.date <- function(date, dates = date_base){
 ####################################################
 ############## Sección 2: ENTIDADES ################
 ####################################################
-## Código que identifica, revisa y corrige entidades
 ####################################################
 ####################################################
+
 entities <- list(
     "01" = "Aguascalientes",
     "02" = "Baja California",
@@ -294,30 +294,33 @@ transform.all <- function(entity, mun = NA,
 ####################################################
 ############### Sección 3: NOMBRES #################
 ####################################################
-## Código que identifica, revisa y corrige nombres
 ####################################################
 ####################################################
-names <- function(text, only_names = FALSE){
-    name = ""
+
+iden_names <- function(text, only_names = FALSE){
+    names <- ""
     if(only_names == TRUE){
         text  <- str_replace(text,"^.{1}",tolower(str_sub(text,1,1)))
     }
+    text  <- str_replace_all(text, "[[:punct:]]+[[:space:]]*[A-Z][a-z]{1,4}","_")
+    text  <- str_replace_all(text, "[[:punct:]]+.{1,5}\n+.{1,5}[A-Z]","_")
     regex <- paste0("( *[[:upper:]]]+[[:alpha:]]{3,} *[[:upper:]]+[[:alpha:]]{3,} ",
                    "*[[:upper:]]+[[:alpha:]]{3,} *| *[[:upper:]]+[[:alpha:]]{3,}",
                    " *[[:upper:]]+[[:alpha:]]{3,} *| *[[:upper:]]+[[:alpha:]]{3,} *)")
     names <- str_match_all(text, regex)
     if(length(names[[1]]) > 0){
     names <- names[[1]][str_length(names[[1]][,1])>=3,1]
-    name  <- names[which(max(str_length(names)) == str_length(names))[1]]
-    name  <- str_trim(name)
+    #name  <- names[which(max(str_length(names)) == str_length(names))[1]]
+    names  <- unique(str_trim(names))
     }
-    name
+    names
 }
 
-names_in_col <- function(col){
-    sum(laply(col,names) != "")
+names_in_col <- function(col, thres = 0){
+    entit <- llply(col, function(t)t <- iden_names(t))
+    laply(entit, function(t)t <- length(t) > thres)
 }
 
 ident_cols <- function(data){
-    apply(data, 2, names_in_col)/nrow(data)
+    apply(data, 2, names_in_col) / nrow(data)
 }
