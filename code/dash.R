@@ -67,11 +67,21 @@ ui <- dashboardPage(
                         solidHeader = TRUE,
                         collapsible = TRUE,
                         collapsed   = TRUE,
-                        textInput("date",   label = h3("Columnas que contienen fechas"), value = "1,2,3..."),
-                        textInput("states", label = h3("Columnas que contienen estados"), value = "1,2,3..."),
-                        textInput("mun",    label = h3("Columnas que contienen municipios"), value = "1,2,3..."),
-                        textInput("loc",    label = h3("Columnas que contienen localidades"), value = "1,2,3..."),
-                        textInput("URLs",   label = h3("Columnas que contienen URLs"), value = "1,2,3...")
+                        textInput("date",
+                                  label = h3("Columnas que contienen fechas"),
+                                  value = "1,2,3..."),
+                        textInput("states",
+                                  label = h3("Columnas que contienen estados"),
+                                  value = "1,2,3..."),
+                        textInput("mun",
+                                  label = h3("Columnas que contienen municipios"),
+                                  value = "1,2,3..."),
+                        textInput("loc",
+                                  label = h3("Columnas que contienen localidades"),
+                                  value = "1,2,3..."),
+                        textInput("URLs",
+                                  label = h3("Columnas que contienen URLs"),
+                                  value = "1,2,3...")
                     ),
 
                     ## Descarga de resultados
@@ -90,7 +100,7 @@ ui <- dashboardPage(
 
                     ## Base de datos inicial
                     box(
-                        status      = "info",
+                        status      = "warning",
                         title       = "Base de datos inicial",
                         width       = 6,
                         solidHeader = TRUE,
@@ -116,42 +126,7 @@ ui <- dashboardPage(
 
 ## Server
 server <- function(input, output) {
-
-    datasetInput <- reactive({
-        if(input$url != "url..."){
-            if(input$class = "xlsx/xls"){
-                data <- data.frame(read.xls(input$url))                
-            }else if(input$class = "csv"){
-                data <- read.csv(input$url, encoding = "UTF-8")
-            }else if(input$class = "dbf"){
-                data <- read.dbf(input$url)
-            }
-            data
-        }
-  })
-
     
-    table <- renderDataTable({
-        ## Despliegue de resultados.
-    datasetInput()
-    })
-
-    downloadData <- downloadHandler(
-    ## Nombre del archivo
-    filename = function() {
-		  paste(input$nombre, input$filetype, sep = ".")
-	  },
-
-    ## Esta fun. escribe el archivo.
-    content = function(file) {
-      sep <- switch(input$filetype, "csv" = ",", "xlsx" = "\t")
-        ## Write to a file specified by the 'file' argument
-      if(sep == ","){
-          write.table(datasetInput(), file, sep = sep,
-                  row.names = FALSE)
-      }
-    }
-  ) 
 }
 shinyApp(ui, server)
 

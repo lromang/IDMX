@@ -289,3 +289,35 @@ transform.all <- function(entity, mun = NA,
 ## transform.all("mchcan")
 ## transform.all("oxc", "sn. agst. chayu")
 ## transform.all("oxc", "sn. agst. chayu", "col. sn. flipe")
+
+
+####################################################
+############### Sección 3: NOMBRES #################
+####################################################
+## Código que identifica, revisa y corrige nombres
+####################################################
+####################################################
+names <- function(text, only_names = FALSE){
+    name = ""
+    if(only_names == TRUE){
+        text  <- str_replace(text,"^.{1}",tolower(str_sub(text,1,1)))
+    }
+    regex <- paste0("( *[[:upper:]]]+[[:alpha:]]{3,} *[[:upper:]]+[[:alpha:]]{3,} ",
+                   "*[[:upper:]]+[[:alpha:]]{3,} *| *[[:upper:]]+[[:alpha:]]{3,}",
+                   " *[[:upper:]]+[[:alpha:]]{3,} *| *[[:upper:]]+[[:alpha:]]{3,} *)")
+    names <- str_match_all(text, regex)
+    if(length(names[[1]]) > 0){
+    names <- names[[1]][str_length(names[[1]][,1])>=3,1]
+    name  <- names[which(max(str_length(names)) == str_length(names))[1]]
+    name  <- str_trim(name)
+    }
+    name
+}
+
+names_in_col <- function(col){
+    sum(laply(col,names) != "")
+}
+
+ident_cols <- function(data){
+    apply(data, 2, names_in_col)/nrow(data)
+}
