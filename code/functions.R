@@ -36,6 +36,7 @@ suppressPackageStartupMessages(library(shiny))
 ##---------------------------------
 ###################################################
 
+
 ###################################################
 ##---------------------------------
 ## most_simil
@@ -52,6 +53,7 @@ most_simil <- function(char1, char2){
     ## replacements and transpositions (less or equal than Levenshtein).
     ## LCS: longest common substring
     ##-------------------------------------------------------------------
+
     max_str_length <- max(str_length(char1), str_length(char2))
     max_unique_length <- max(
         length(unique(str_split(char1, "")[[1]])),
@@ -63,8 +65,8 @@ most_simil <- function(char1, char2){
         lv        = 1 - stringdist(char1, char2, method = "lv")  / max_str_length,
         dl        = 1 - stringdist(char1, char2, method = "dl")  / max_str_length,
         lcs       = 1 - stringdist(char1, char2, method = "lcs") / max_str_length,
-        cosine    = max(1 - stringdist(char1, char2, method = "cosine", q = 3),0),
-        jaccard   = max(1 - stringdist(char1, char2, method = "jaccard", q = 3),0)
+        cosine    = max(1 - stringdist(char1, char2, method = "cosine", q = 3), 0),
+        jaccard   = max(1 - stringdist(char1, char2, method = "jaccard", q = 3), 0)
     )
     max(unlist(res))
 }
@@ -76,21 +78,30 @@ most_simil <- function(char1, char2){
 ###################################################
 most_simil_mult <- function(char, bag){
     ##--------------------------------------------------------------
-    ## Devuelve una lista con los siguientes elementos:
-    ## 1.- Índice máximo de similitud entre bag y char.
-    ## 2.- El caracter dentro de bag que alcanzó dicho índice.
-    ## 3.- El índice de dicho caracter.
+    ## Returns a list containing the following elements:
+    ## 1.- Maximum similarity between char & bag.
+    ## 2.- The character within bag that reached such index.
+    ## 3.- The index of such character.
     ##--------------------------------------------------------------
-    ## Primera Iteración, los que tienen los elementos más parecidos.
-    simil   <- laply(bag, function(t)t <- (1 - stringdist(char,
-                                                        t,
-                                                        method = "jaccard",
-                                                        q = 1)))
+
+    ## First comparison, using jaccard similarity.
+    simil <- laply(
+        bag,
+        function(t)t <- (
+            1 - stringdist(
+                    char,
+                    t,
+                    method = "jaccard",
+                    q = 1
+                )
+        )
+    )
     indexes <- which(simil == max(simil))
     res_1   <-
     list(simil = max(simil),
          char  = unique(bag[indexes]))
-    ## Segunda Iteración, combinación de distancias.
+
+    ## Second comparison, using a mix of similarities.
     simil <- laply(res_1[[2]],
                   function(t)t <- most_simil(char, t))
     index <- which(simil == max(simil))[1]
@@ -100,16 +111,17 @@ most_simil_mult <- function(char, bag){
         list(simil = max(simil),
              index = index,
              char  = char)
-    ## Devolvemos resultados
+    ## Results.
     res
 }
 
 ###################################################
-############### Sección 1: FECHAS #################
+###################################################
+##################### DATES #######################
 ###################################################
 ###################################################
 
-## Base de fechas correctas
+## Base with standard dates.
 date_base <- seq(as.Date("1980-01-01"),
                 today(),
                 "days")
@@ -133,12 +145,14 @@ transform_month <- function(month){
                        "11" = c("Noviembre", "nov."),
                       "12"  = c("Diciembre","dic.")
                       )
-    ## bolsa de meses
+    ## Bag of months
     off_months <- unlist(bag_months)
-    ## Obtener la entidad que se parece más
+    ## Get most similar date
     most_like <- most_simil_mult(month, off_months)$char
-    ## Obtener índice
-    clave <- names(bag_months)[laply(bag_months, function(t){ t <- most_like %in% t})]
+    ## Get index
+    clave <- names(bag_months)[laply(
+                     bag_months,
+                     function(t){ t <- most_like %in% t})]
     list("Mes" = clave, "Nombre" = bag_months[clave][[1]][1])
 }
 
@@ -167,24 +181,28 @@ date_pre_proc <- function(date){
 ###################################################
 transform.date <- function(date, dates = date_base){
     date <- date_pre_proc(date)
-    list("possible_date1" = head(most_simil_mult(date$date1, dates)$char, 1),
-         "possible_date2" = head(most_simil_mult(date$date2, dates)$char, 1)
+    list("possible_date1" =
+             head(most_simil_mult(date$date1, dates)$char, 1),
+         "possible_date2" =
+             head(most_simil_mult(date$date2, dates)$char, 1)
          )
 }
 
 
 ####################################################
-################ PRUEBA SECCIÓN 1 ##################
+################### Test DATES #####################
+####################################################
 ## transform.date("10 de enero 2015")
 ## transform.date("12/dic/2014")
 ## transform.date("12/15/2004")
 
 
 ####################################################
-############## Sección 2: ENTIDADES ################
+####################################################
+################ FEDERAL ENTITIES ##################
 ####################################################
 ####################################################
-####################################################
+
 
 entities <- list(
     "01" = "Aguascalientes",
@@ -239,7 +257,8 @@ transform.all <- function(entity, mun = NA,
                          full_bag = full_ent){
     ##--------------------------------------------------------------
     ## Recibe una entidad federativa y opcionalment un municipio y una localidad
-    ## los transforma a su clave INEGI  y nombre más probable, dada esa entidad federativa.
+    ## los transforma a su clave INEGI  y nombre más probable,
+    ## dada esa entidad federativa.
     ## IN
     ## entity: Entidad federativa la cual se quiere transformar.
     ## mun: Municipio el cual se quiere transformar.
@@ -255,19 +274,24 @@ transform.all <- function(entity, mun = NA,
     ## Obtener la entidad que se parece más.
     most_like     <- most_simil_mult(tolower(entity), off_entities)$char
     ## Obtener índice entidad.
-    clave         <- names(bag_entities)[laply(bag_entities,
-                                              function(t){t <- most_like %in% tolower(t)})]
+    clave         <- names(bag_entities)[
+                             laply(bag_entities,
+                                   function(t){t <-
+                                                   most_like %in%
+                                                   tolower(t)})]
     ## Obtener municipio al que se parece más, en caso de que haya.
     if(!is.na(mun)){
         filt_mun      <- dplyr::filter(full_bag, ENTIDAD == clave)
-        most_like_mun <- most_simil_mult(tolower(mun), unique(filt_mun$NOM_MUN))$index
+        most_like_mun <- most_simil_mult(tolower(mun),
+                                        unique(filt_mun$NOM_MUN))$index
         ## Obtener clave y nombre municipio
         mun_name <- unique(filt_mun$NOM_MUN)[most_like_mun]
         mun_key  <- filt_mun$MUN[filt_mun$NOM_MUN == mun_name][1]
         ## Obtener localidad a la que se parece más, en caso de que haya.
         if(!is.na(loc)){
             filt_mun_loc  <- dplyr::filter(filt_mun, MUN == mun_key)
-            most_like_loc <- most_simil_mult(tolower(loc), unique(filt_mun_loc$NOM_LOC))$index
+            most_like_loc <- most_simil_mult(tolower(loc),
+                                            unique(filt_mun_loc$NOM_LOC))$index
             ## Obtener clave y nombre municipio
             loc_name <- unique(filt_mun_loc$NOM_LOC)[most_like_loc]
             loc_key  <- filt_mun_loc$LOC[filt_mun_loc$NOM_LOC == loc_name][1]
@@ -284,19 +308,24 @@ transform.all <- function(entity, mun = NA,
 }
 
 ####################################################
-################ PRUEBA SECCIÓN 2 ##################
+############# Test FEDERAL ENTITIES ################
 ## transform.all("CAMPECHE")
 ## transform.all("mchcan")
 ## transform.all("oxc", "sn. agst. chayu")
 ## transform.all("oxc", "sn. agst. chayu", "col. sn. flipe")
 
+####################################################
+####################################################
+################# NAMED ENTITIES ###################
+####################################################
+####################################################
 
-####################################################
-############### Sección 3: NOMBRES #################
-####################################################
-####################################################
-####################################################
 
+###################################################
+##---------------------------------
+## iden_names
+##---------------------------------
+###################################################
 iden_names <- function(text, only_names = FALSE){
     names <- ""
     if(only_names == TRUE){
@@ -316,11 +345,19 @@ iden_names <- function(text, only_names = FALSE){
     names
 }
 
+###################################################
+##---------------------------------
+## transform.all
+##---------------------------------
+###################################################
 names_in_col <- function(col, thres = 0){
-    entit <- llply(col, function(t)t <- iden_names(t))
-    laply(entit, function(t)t <- length(t) > thres)
+    result <- list()
+    entit  <- llply(col, function(t)t <- iden_names(t))
+    result[[1]] <- laply(entit, function(t)t <- length(t) > thres)
+    result[[2]] <- sum(result[[1]])
+    result
 }
 
-ident_cols <- function(data){
-    apply(data, 2, names_in_col) / nrow(data)
+ident_cols_names <- function(data){
+    apply(data, 2, function(t)t <- names_in_col(t)[[2]]) / nrow(data)
 }
