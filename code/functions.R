@@ -8,6 +8,9 @@
 ###################################################
 ## Libraries
 ###################################################
+## Manipulate URLS
+suppressPackageStartupMessages(library(XML))
+suppressPackageStartupMessages(library(RCurl))
 ## Manipulate dates
 suppressPackageStartupMessages(library(lubridate))
 ## Manipulate strings
@@ -365,4 +368,53 @@ names_in_col <- function(col, thres = 0){
 ###################################################
 ident_cols_names <- function(data){
     apply(data, 2, function(t)t <- names_in_col(t)[[2]]) / nrow(data)
+}
+
+
+###################################################
+##---------------------------------
+## get_words_wiki
+##---------------------------------
+###################################################
+get_words_wiki <- function(url){
+    ## Obtiene todas las ligas dentro de la pagina proporcionada.
+    ## IN
+    ## url: la direccion de la pagina de donde se quieren obtener las ligas.
+    ## OUT
+    ## arreglo que contiene todas las ligas de la pagina
+    result <- list()
+    page   <- getURL(url)
+    tree   <- htmlParse(page)
+    links  <- xpathApply(tree,
+                        path = "//a",
+                        fun  = xmlGetAttr,
+                        name = "href")
+    links     <- unlist(links)
+    regex     <- "Spanish_adjectives&pagefrom=.{2,}"
+    next_page <- links[
+        str_detect(links,regex)][1]
+    links       <- links[str_detect(links, "/wiki/[a-z]+")]
+    words       <- str_replace(links, "/wiki/", "")
+    result[[1]] <- paste0("https://en.wiktionary.org/",next_page)
+    result[[2]] <- words
+    result
+}
+
+
+###################################################
+##---------------------------------
+## get_words_number
+##---------------------------------
+###################################################
+get_words_number <- function(url, number){
+    ## Obtiene todas las ligas de una pagina que es parte de un conjunto enumerado
+    ## de paginas
+    ## IN
+    ## url: la direccion de la pagina de donde se quieren obtener las ligas
+    ## number: el número de la pagina.
+    ## OUT
+    ## arreglo que contiene todas las ligas de la pagina
+    base.url <- paste0(url,"?page=",number)
+    links    <- get_words_wiki(base.url)
+    links
 }
