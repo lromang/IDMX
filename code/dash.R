@@ -98,6 +98,16 @@ ui <- dashboardPage(
                                      selected = 1)
                     ),
 
+                    ## Reporte
+                    box(
+                        status      = "primary",
+                        title       = "Reporte",
+                        width       = 12,
+                        solidHeader = TRUE,
+                        collapsible = TRUE,
+                        collapsed   = TRUE
+                    ),
+
                     ## Base de datos inicial
                     box(
                         status      = "warning",
@@ -105,7 +115,8 @@ ui <- dashboardPage(
                         width       = 6,
                         solidHeader = TRUE,
                         collapsible = TRUE,
-                        collapsed   = TRUE
+                        collapsed   = TRUE,
+                        dataTableOutput("in_table")
                     ),
 
                     ## Base de datos final
@@ -125,8 +136,36 @@ ui <- dashboardPage(
 
 
 ## Server
-server <- function(input, output) {
-    
+server <- function(input, output){
+
+##    datasetInput <- reactive({
+        ## En esta seccin se carga la base de datos desde la liga que se proporciona.
+        ##data <- data.frame(read.xls("http://tecnoregistro.com.mx/AGA2015/reportes/?action=exportarRegUser&email=marianacourtney@gmail.com&clave=4598cfd1cfe70d29e5c9d77b51002f272790ba66"))
+        ##data
+##        full_ent <- read.csv(
+  ##          "https://raw.githubusercontent.com/lromang/IDMX/master/data/coords.csv",
+    ##        stringsAsFactors = FALSE,
+      ##      header = TRUE,
+        ##    colClasses = rep("character", 6),
+          ##  encoding = "UTF-8"
+        ##)
+        ##full_ent
+  ##  })
+
+     output$in_table <- renderDataTable({
+        ## Despliegue de resultados.
+         ##datasetInput()
+         full_ent <- read.csv(
+                 "https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data",
+             stringsAsFactors = FALSE,
+             header = TRUE,
+             colClasses = rep("character", 6),
+             encoding = "UTF-8"
+         )
+         full_ent
+        ##
+    })
 }
+
 shinyApp(ui, server)
 
