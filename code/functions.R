@@ -310,6 +310,35 @@ transform.all <- function(entity, mun = NA,
                )
 }
 
+
+###################################################
+##---------------------------------
+## transform.all
+##---------------------------------
+###################################################
+transform.all.col <- function(entity_array, mun = NA,
+                         loc = NA, bag_entities = entities,
+                         full_bag = full_ent){
+    ##--------------------------------------------------------------
+    ## Recibe una entidad federativa y opcionalment un municipio y una localidad
+    ## los transforma a su clave INEGI  y nombre más probable,
+    ## dada esa entidad federativa.
+    ## IN
+    ## entity: Entidad federativa la cual se quiere transformar.
+    ## mun: Municipio el cual se quiere transformar.
+    ## loc: Localidad la cual se quiere transformar.
+    ## OUT
+    ## data.frame con la clasificación correspondiente
+    ##--------------------------------------------------------------
+    ids <- c()
+    for(i in 1:length(entity_array)){
+        ids <- rbind(ids, transform.all(entity_array[i], mun[i], loc[i],
+                                       bag_entities = entities,
+                                       full_bag = full_ent))
+    }
+    ids
+}
+
 ####################################################
 ############# Test FEDERAL ENTITIES ################
 ## transform.all("CAMPECHE")

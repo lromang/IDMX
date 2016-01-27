@@ -52,9 +52,9 @@ ui <- dashboardPage(
                         solidHeader = TRUE,
                         collapsible = TRUE,
                         collapsed   = TRUE,
-                        textInput("url",label = h3("URL del archivo"), value = "url..."),
+                        textInput("url",label = h3("URL del archivo"), value = "url"),
                         radioButtons("class", label = h3("Tipo de archivo"),
-                                     choices = list("csv" = 1, "xls/xlsx" = 2,
+                                     choices = list("csv" = 1, "xlsx" = 2,
                                                     "dbf" = 3),
                                      selected = 1)
                     ),
@@ -98,21 +98,11 @@ ui <- dashboardPage(
                                      selected = 1)
                     ),
 
-                    ## Reporte
-                    box(
-                        status      = "primary",
-                        title       = "Reporte",
-                        width       = 12,
-                        solidHeader = TRUE,
-                        collapsible = TRUE,
-                        collapsed   = TRUE
-                    ),
-
                     ## Base de datos inicial
                     box(
                         status      = "warning",
                         title       = "Base de datos inicial",
-                        width       = 6,
+                        width       = 12,
                         solidHeader = TRUE,
                         collapsible = TRUE,
                         collapsed   = TRUE,
@@ -123,7 +113,17 @@ ui <- dashboardPage(
                     box(
                         status      = "info",
                         title       = "Base de datos final",
-                        width       = 6,
+                        width       = 12,
+                        solidHeader = TRUE,
+                        collapsible = TRUE,
+                        collapsed   = TRUE
+                    ),
+
+                    ## Reporte
+                    box(
+                        status      = "primary",
+                        title       = "Reporte",
+                        width       = 12,
                         solidHeader = TRUE,
                         collapsible = TRUE,
                         collapsed   = TRUE
@@ -137,33 +137,40 @@ ui <- dashboardPage(
 
 ## Server
 server <- function(input, output){
-
-##    datasetInput <- reactive({
+    datasetInput <- reactive({
         ## En esta seccin se carga la base de datos desde la liga que se proporciona.
-        ##data <- data.frame(read.xls("http://tecnoregistro.com.mx/AGA2015/reportes/?action=exportarRegUser&email=marianacourtney@gmail.com&clave=4598cfd1cfe70d29e5c9d77b51002f272790ba66"))
-        ##data
-##        full_ent <- read.csv(
-  ##          "https://raw.githubusercontent.com/lromang/IDMX/master/data/coords.csv",
-    ##        stringsAsFactors = FALSE,
-      ##      header = TRUE,
-        ##    colClasses = rep("character", 6),
-          ##  encoding = "UTF-8"
-        ##)
-        ##full_ent
-  ##  })
+        ## https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data
+        ## https://raw.githubusercontent.com/lromang/IDMX/master/data/coords.csv
+        if(input$class == 2){
+            full_ent <- data.frame(read.xls(input$url, sheetIndex = 1))
+        }else if(input$class == 1){
+            full_ent <- read.csv(
+                input$url,
+                stringsAsFactors = FALSE,
+                header = TRUE,
+                colClasses = rep("character", 6),
+                encoding = "UTF-8"
+            )
+        }else{
+            full_ent <- read.dbf(input$url)
+        }
+        full_ent
+    })
 
      output$in_table <- renderDataTable({
-        ## Despliegue de resultados.
-         ##datasetInput()
-         full_ent <- read.csv(
-                 "https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data",
-             stringsAsFactors = FALSE,
-             header = TRUE,
-             colClasses = rep("character", 6),
-             encoding = "UTF-8"
-         )
-         full_ent
-        ##
+         ## Despliegue de resultados.
+         if(str_length(input$url) > 3){
+             datasetInput()
+         }
+     })
+
+    output$out_table <- renderDataTable({
+        if(str_detect(input$states,"...") != FALSE ){
+            states <- paste0("c(",input$states,")")
+            data <- datasetInput()
+            data <- cbind(data, transform.all.col(data[,eval(parse(text = states))]))
+            data
+        }
     })
 }
 
