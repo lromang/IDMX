@@ -46,57 +46,46 @@ ui <- dashboardPage(
 
                     ## Data base controls
                     box(
-                        title       = "Archivo a validar",
-                        width       = 4,
+                        title       = "Base a validar",
+                        width       = 3,
                         background  = "black",
                         solidHeader = TRUE,
                         collapsible = TRUE,
-                        collapsed   = TRUE,
+                        collapsed   = FALSE,
                         textInput("url",label = h3("URL del archivo"), value = "url"),
                         radioButtons("class", label = h3("Tipo de archivo"),
                                      choices = list("csv" = 1, "xlsx" = 2,
                                                     "dbf" = 3),
                                      selected = 1)
-                    ),
-                    
-                    ## Selección de columnas
-                    box(
-                        title       = "Selección de columnas",
-                        width       = 4,
-                        background  = "black",
-                        solidHeader = TRUE,
-                        collapsible = TRUE,
-                        collapsed   = TRUE,
-                        textInput("date",
-                                  label = h3("Columnas que contienen fechas"),
-                                  value = "1,2,3..."),
-                        textInput("states",
-                                  label = h3("Columnas que contienen estados"),
-                                  value = "1,2,3..."),
-                        textInput("mun",
-                                  label = h3("Columnas que contienen municipios"),
-                                  value = "1,2,3..."),
-                        textInput("loc",
-                                  label = h3("Columnas que contienen localidades"),
-                                  value = "1,2,3..."),
-                        textInput("URLs",
-                                  label = h3("Columnas que contienen URLs"),
-                                  value = "1,2,3...")
-                    ),
+                    ),                    
 
                     ## Descarga de resultados
                     box(
-                        title       = "Descarga de resultados",
-                        width       = 4,
+                        title       = "Descarga de base",
+                        width       = 3,
                         background  = "black",
                         solidHeader = TRUE,
                         collapsible = TRUE,
-                        collapsed   = TRUE,
-                        radioButtons("d_class", label = h3("Formato de descarga"),
-                                     choices = list("csv" = 1, "xls/xlsx" = 2,
+                        collapsed   = FALSE,
+                        textInput("filename", label  = h3("Nombre archivo"),
+                                  value = "archivo"),
+                        radioButtons("dclass", label = h3("Formato de descarga"),
+                                     choices = list("csv" = 1, "xlsx" = 2,
                                                     "dbf" = 3),
-                                     selected = 1)
+                                     selected = 1),
+                        downloadButton("downloadData","Descarga")
                     ),
+
+                    ## Reporte
+                    box(
+                        background  = "black",
+                        title       = "Reporte",
+                        width       = 6,
+                        solidHeader = TRUE,
+                        collapsible = TRUE,
+                        collapsed   = TRUE
+                    ),
+
 
                     ## Base de datos inicial
                     box(
@@ -117,16 +106,6 @@ ui <- dashboardPage(
                         solidHeader = TRUE,
                         collapsible = TRUE,
                         collapsed   = TRUE
-                    ),
-
-                    ## Reporte
-                    box(
-                        status      = "primary",
-                        title       = "Reporte",
-                        width       = 12,
-                        solidHeader = TRUE,
-                        collapsible = TRUE,
-                        collapsed   = TRUE
                     )
                 )
             )
@@ -137,6 +116,8 @@ ui <- dashboardPage(
 
 ## Server
 server <- function(input, output){
+
+    ## Obtiene base de datos.
     datasetInput <- reactive({
         ## En esta seccin se carga la base de datos desde la liga que se proporciona.
         ## https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data
@@ -157,6 +138,7 @@ server <- function(input, output){
         full_ent
     })
 
+    ## Render original dataset.
      output$in_table <- renderDataTable({
          ## Despliegue de resultados.
          if(str_length(input$url) > 3){
@@ -164,6 +146,7 @@ server <- function(input, output){
          }
      })
 
+    ## Render results after correction.
     output$out_table <- renderDataTable({
         if(str_detect(input$states,"...") != FALSE ){
             states <- paste0("c(",input$states,")")
@@ -172,6 +155,32 @@ server <- function(input, output){
             data
         }
     })
+
+    ## Download dataset
+    output$downloadData <- downloadHandler(
+        filename = function(){
+            if(input$dclass == 1){
+                paste0(input$filename, ".csv")
+            }else if(input$dclass == 2){
+                paste0(input$filename, ".xlsx")
+            }else{
+                paste0(input$filename, ".dbf")
+            }
+        },
+        content = function(file){
+            if(input$dclass == 1){
+                write.table(datasetInput(),
+                            file,
+                            sep = ",",
+                            row.names = FALSE
+                            )
+            }else if(input$dclass == 2){
+                write.xlsx(datasetInput(),
+                           file,
+                           sheetName = "Sheet1")
+            }
+        }
+    )   
 }
 
 shinyApp(ui, server)

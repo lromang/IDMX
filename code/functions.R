@@ -339,6 +339,70 @@ transform.all.col <- function(entity_array, mun = NA,
     ids
 }
 
+
+###################################################
+##---------------------------------
+## iden.entity
+##---------------------------------
+###################################################
+ident.entity <- function(col, class = "ent", thresh = .6){
+    if(class == "ent"){
+        test_set <- unlist(entities)
+    }else if(class == "mun"){
+        mun <- unique(full_ent$NOM_MUN)
+        test_set <- mun[
+            sample(
+                length(mun),
+                length(mun)*.3,
+            )                                            ]
+    }else if(class == "loc"){
+        loc <- unique(full_ent$NOM_LOC)
+        test_set <- loc[
+            sample(
+                length(loc),
+                length(loc)*.3,
+            )                                            ]
+    }else{
+        test_set <- date_base[
+            sample(
+                length(date_base),
+                length(date_base)*.3)
+            ]
+    }
+    samp      <- sample(length(col), .3*length(col))
+    col_test  <- col[samp]
+    sim_index <- mean(laply(col_test,
+                           function(t) t <- most_simil_mult(tolower(t),
+                                                           tolower(test_set))$simil))
+    sim_index > thresh
+}
+
+###################################################
+##---------------------------------
+## run.a.test
+##---------------------------------
+###################################################
+run.a.test <- function(data){
+    ents <- apply(data, 2, function(t) t <- ident.entity(t, "ent"))
+    muns <- apply(data, 2, function(t) t <- ident.entity(t, "mun"))
+    locs <- apply(data, 2, function(t) t <- ident.entity(t, "loc"))
+    date <- apply(data, 2, function(t) t <- ident.entity(t, "date"))
+    paste0("Se corrió un análisis de identificación sobre la base \n y se encontraron los ",
+           "siguientes posibles tipos de datos:\n",
+           "Nombres de estados en la/las columna/columnas: \n",
+           paste(which(ents == TRUE), collapse = ","),"\n",
+           "Nombres de municipios en la/las columna/columnas: \n ",
+           paste(which(muns == TRUE), collapse = ","),"\n",
+           "Nombres de localidades en la/las columna/columnas: \n",
+           paste(which(locs == TRUE), collapse = ","),"\n",
+           "Fechas en la/las columna/columnas: \n",
+           paste(which(date == TRUE), collapse = ",")
+           )
+}
+
+
+
+
 ####################################################
 ############# Test FEDERAL ENTITIES ################
 ## transform.all("CAMPECHE")
