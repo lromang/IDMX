@@ -19,7 +19,7 @@ source("./functions.R")
 ##------------------------------
 ui <- dashboardPage(
     skin = "purple",
-    dashboardHeader(title = "IDMX"),
+    dashboardHeader(title = "Refinadora"),
     ## Dashboard Side Bar
     dashboardSidebar(
         sidebarMenu(
@@ -56,7 +56,9 @@ ui <- dashboardPage(
                         radioButtons("class", label = h3("Tipo de archivo"),
                                      choices = list("csv" = 1, "xlsx" = 2,
                                                     "dbf" = 3),
-                                     selected = 1)
+                                     selected = 1),
+                        hr(),
+                        checkboxInput("s_report", label = "Generar reporte")
                     ),                    
 
                     ## Descarga de resultados
@@ -83,7 +85,8 @@ ui <- dashboardPage(
                         width       = 6,
                         solidHeader = TRUE,
                         collapsible = TRUE,
-                        collapsed   = TRUE
+                        collapsed   = TRUE,
+                        htmlOutput("report")
                     ),
 
 
@@ -95,7 +98,7 @@ ui <- dashboardPage(
                         solidHeader = TRUE,
                         collapsible = TRUE,
                         collapsed   = TRUE,
-                        dataTableOutput("in_table")
+                        DT::dataTableOutput("in_table")
                     ),
 
                     ## Base de datos final
@@ -117,7 +120,9 @@ ui <- dashboardPage(
 ## Server
 server <- function(input, output){
 
+    ## ------------------------------
     ## Obtiene base de datos.
+    ## ------------------------------
     datasetInput <- reactive({
         ## En esta seccin se carga la base de datos desde la liga que se proporciona.
         ## https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data
@@ -138,15 +143,21 @@ server <- function(input, output){
         full_ent
     })
 
+    ## ------------------------------
     ## Render original dataset.
-     output$in_table <- renderDataTable({
+    ## ------------------------------n
+     output$in_table <- DT::renderDataTable({
          ## Despliegue de resultados.
          if(str_length(input$url) > 3){
-             datasetInput()
+             table <- datasetInput()
+             DT::datatable(table,
+                           options = list(scrollX = TRUE))
          }
      })
 
+    ## ------------------------------
     ## Render results after correction.
+    ## ------------------------------
     output$out_table <- renderDataTable({
         if(str_detect(input$states,"...") != FALSE ){
             states <- paste0("c(",input$states,")")
@@ -156,7 +167,18 @@ server <- function(input, output){
         }
     })
 
+    ## ------------------------------
+    ## Render results after correction.
+    ## ------------------------------
+    output$report <- renderUI({
+        if(input$s_report == TRUE){
+            HTML(run.a.test(datasetInput()))
+        }
+    })
+    
+    ## ------------------------------
     ## Download dataset
+    ## ------------------------------
     output$downloadData <- downloadHandler(
         filename = function(){
             if(input$dclass == 1){

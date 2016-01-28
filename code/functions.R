@@ -21,6 +21,7 @@ suppressPackageStartupMessages(library(plyr))
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(tidyr))
 suppressPackageStartupMessages(library(data.table))
+suppressPackageStartupMessages(library(DT))
 ## Graphics
 suppressPackageStartupMessages(library(ggplot2))
 ## Read in data
@@ -345,31 +346,31 @@ transform.all.col <- function(entity_array, mun = NA,
 ## iden.entity
 ##---------------------------------
 ###################################################
-ident.entity <- function(col, class = "ent", thresh = .6){
+ident.entity <- function(col, class = "ent", thresh = .6, pres = .05){
     if(class == "ent"){
         test_set <- unlist(entities)
     }else if(class == "mun"){
-        mun <- unique(full_ent$NOM_MUN)
+        mun      <- unique(full_ent$NOM_MUN)
         test_set <- mun[
             sample(
                 length(mun),
-                length(mun)*.3,
-            )                                            ]
+                length(mun) * pres)
+        ]
     }else if(class == "loc"){
-        loc <- unique(full_ent$NOM_LOC)
+        loc      <- unique(full_ent$NOM_LOC)
         test_set <- loc[
             sample(
                 length(loc),
-                length(loc)*.3,
-            )                                            ]
+                length(loc) * pres)
+            ]
     }else{
         test_set <- date_base[
             sample(
                 length(date_base),
-                length(date_base)*.3)
+                length(date_base) * pres)
             ]
     }
-    samp      <- sample(length(col), .3*length(col))
+    samp      <- sample(length(col), min(.3*length(col), 5))
     col_test  <- col[samp]
     sim_index <- mean(laply(col_test,
                            function(t) t <- most_simil_mult(tolower(t),
@@ -387,16 +388,18 @@ run.a.test <- function(data){
     muns <- apply(data, 2, function(t) t <- ident.entity(t, "mun"))
     locs <- apply(data, 2, function(t) t <- ident.entity(t, "loc"))
     date <- apply(data, 2, function(t) t <- ident.entity(t, "date"))
-    paste0("Se corrió un análisis de identificación sobre la base \n y se encontraron los ",
-           "siguientes posibles tipos de datos:\n",
-           "Nombres de estados en la/las columna/columnas: \n",
-           paste(which(ents == TRUE), collapse = ","),"\n",
-           "Nombres de municipios en la/las columna/columnas: \n ",
-           paste(which(muns == TRUE), collapse = ","),"\n",
-           "Nombres de localidades en la/las columna/columnas: \n",
-           paste(which(locs == TRUE), collapse = ","),"\n",
-           "Fechas en la/las columna/columnas: \n",
-           paste(which(date == TRUE), collapse = ",")
+    paste(
+        paste0("<h4>Se corrió un análisis de validación sobre la base y se  ",
+               "obtuvieron los posibles tipos de datos: </h4>"),
+          "<h3>Nombres de estados en las columnas: </h3>",
+          paste0("cols = ",paste(which(ents == TRUE), collapse = ",")),
+          "<h3>Nombres de municipios en las columnas: </h3>",
+          paste0("cols = ",paste(which(muns == TRUE), collapse = ",")),
+          "<h3>Nombres de localidades en las columnas: </h3>",
+          paste0("cols = ",paste(which(locs == TRUE), collapse = ",")),
+          "<h3>Fechas: </h3>",
+          paste0("cols = ",paste(which(date == TRUE), collapse = ",")),
+          sep = "<br/>"
            )
 }
 
