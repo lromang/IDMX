@@ -14,9 +14,10 @@
 ##------------------------------
 source("./functions.R")
 
-##------------------------------
+
+################################
 ## UI
-##------------------------------
+################################
 ui <- dashboardPage(
     skin = "purple",
     dashboardHeader(title = "Refinadora"),
@@ -44,7 +45,9 @@ ui <- dashboardPage(
                 tabName = "dashboard",
                 fluidRow(
 
-                    ## Data base controls
+                    ##---------------------------
+                    ## Controles de base de datos
+                    ##---------------------------
                     box(
                         title       = "Base a validar",
                         width       = 3,
@@ -61,7 +64,9 @@ ui <- dashboardPage(
                         checkboxInput("s_report", label = "Generar reporte")
                     ),                    
 
+                    ##---------------------------
                     ## Descarga de resultados
+                    ##---------------------------
                     box(
                         title       = "Descarga de base",
                         width       = 3,
@@ -77,8 +82,10 @@ ui <- dashboardPage(
                                      selected = 1),
                         downloadButton("downloadData","Descarga")
                     ),
-
+                    
+                    ##---------------------------
                     ## Reporte
+                    ##---------------------------
                     box(
                         background  = "black",
                         title       = "Reporte",
@@ -89,8 +96,9 @@ ui <- dashboardPage(
                         htmlOutput("report")
                     ),
 
-
+                    ##---------------------------
                     ## Base de datos inicial
+                    ##---------------------------
                     box(
                         status      = "warning",
                         title       = "Base de datos inicial",
@@ -101,7 +109,9 @@ ui <- dashboardPage(
                         DT::dataTableOutput("in_table")
                     ),
 
+                    ##---------------------------
                     ## Base de datos final
+                    ##---------------------------
                     box(
                         status      = "info",
                         title       = "Base de datos final",
@@ -116,8 +126,9 @@ ui <- dashboardPage(
     )
 )
 
-
-## Server
+################################
+## SERVER
+################################
 server <- function(input, output){
 
     ## ------------------------------
@@ -143,9 +154,9 @@ server <- function(input, output){
         full_ent
     })
 
-    ## ------------------------------
-    ## Render original dataset.
-    ## ------------------------------n
+    ## --------------------------------
+    ## Despliega base de datos original
+    ## --------------------------------
      output$in_table <- DT::renderDataTable({
          ## Despliegue de resultados.
          if(str_length(input$url) > 3){
@@ -155,9 +166,9 @@ server <- function(input, output){
          }
      })
 
-    ## ------------------------------
-    ## Render results after correction.
-    ## ------------------------------
+    ## ----------------------------------
+    ## Despliega base de datos corregida
+    ## ----------------------------------
     output$out_table <- renderDataTable({
         if(str_detect(input$states,"...") != FALSE ){
             states <- paste0("c(",input$states,")")
@@ -167,9 +178,9 @@ server <- function(input, output){
         }
     })
 
-    ## ------------------------------
-    ## Render results after correction.
-    ## ------------------------------
+    ## --------------------------------
+    ## Despliega reporte
+    ## --------------------------------
     output$report <- renderUI({
         if(input$s_report == TRUE){
             HTML(run.a.test(datasetInput()))
@@ -177,7 +188,7 @@ server <- function(input, output){
     })
     
     ## ------------------------------
-    ## Download dataset
+    ## Descarga base de datos
     ## ------------------------------
     output$downloadData <- downloadHandler(
         filename = function(){
@@ -200,6 +211,9 @@ server <- function(input, output){
                 write.xlsx(datasetInput(),
                            file,
                            sheetName = "Sheet1")
+            }else{
+                write.dbf(datasetInput(),
+                          file)
             }
         }
     )   

@@ -346,7 +346,7 @@ transform.all.col <- function(entity_array, mun = NA,
 ## iden.entity
 ##---------------------------------
 ###################################################
-ident.entity <- function(col, class = "ent", thresh = .6, pres = .05){
+ident.entity <- function(col, class = "ent", thresh = .5, pres = .05){
     if(class == "ent"){
         test_set <- unlist(entities)
     }else if(class == "mun"){
@@ -372,9 +372,15 @@ ident.entity <- function(col, class = "ent", thresh = .6, pres = .05){
     }
     samp      <- sample(length(col), min(.3*length(col), 5))
     col_test  <- col[samp]
-    sim_index <- mean(laply(col_test,
-                           function(t) t <- most_simil_mult(tolower(t),
-                                                           tolower(test_set))$simil))
+    if(class != "date"){
+        sim_index <- max(laply(col_test,
+                              function(t) t <- most_simil_mult(tolower(t),
+                                                              tolower(test_set))$simil))
+    }else{
+        sim_index <- max(laply(col_test,
+                              function(t) t <- most_simil_mult(date_pre_proc(t)[[1]],
+                                                              test_set)$simil))
+    }
     sim_index > thresh
 }
 
@@ -385,20 +391,16 @@ ident.entity <- function(col, class = "ent", thresh = .6, pres = .05){
 ###################################################
 run.a.test <- function(data){
     ents <- apply(data, 2, function(t) t <- ident.entity(t, "ent"))
-    muns <- apply(data, 2, function(t) t <- ident.entity(t, "mun"))
-    locs <- apply(data, 2, function(t) t <- ident.entity(t, "loc"))
+    ## muns <- apply(data, 2, function(t) t <- ident.entity(t, "mun"))
+    ## locs <- apply(data, 2, function(t) t <- ident.entity(t, "loc"))
     date <- apply(data, 2, function(t) t <- ident.entity(t, "date"))
     paste(
         paste0("<h4>Se corrió un análisis de validación sobre la base y se  ",
                "obtuvieron los posibles tipos de datos: </h4>"),
           "<h3>Nombres de estados en las columnas: </h3>",
-          paste0("cols = ",paste(which(ents == TRUE), collapse = ",")),
-          "<h3>Nombres de municipios en las columnas: </h3>",
-          paste0("cols = ",paste(which(muns == TRUE), collapse = ",")),
-          "<h3>Nombres de localidades en las columnas: </h3>",
-          paste0("cols = ",paste(which(locs == TRUE), collapse = ",")),
+          paste0("cols = ", paste(which(ents == TRUE), collapse = ",")),
           "<h3>Fechas: </h3>",
-          paste0("cols = ",paste(which(date == TRUE), collapse = ",")),
+          paste0("cols = ", paste(which(date == TRUE), collapse = ",")),
           sep = "<br/>"
            )
 }
