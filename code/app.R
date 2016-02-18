@@ -61,7 +61,8 @@ ui <- dashboardPage(
                                                     "dbf" = 3),
                                      selected = 1),
                         hr(),
-                        checkboxInput("s_report", label = "Generar reporte")
+                        checkboxInput("s_report", label = "Generar reporte"),
+                        checkboxInput("s_correct", label = "Corregir base")
                     ),                    
 
                     ##---------------------------
@@ -118,7 +119,8 @@ ui <- dashboardPage(
                         width       = 12,
                         solidHeader = TRUE,
                         collapsible = TRUE,
-                        collapsed   = TRUE
+                        collapsed   = TRUE,
+                        DT::dataTableOutput("out_table")
                     )
                 )
             )
@@ -130,6 +132,7 @@ ui <- dashboardPage(
 ## SERVER
 ################################
 server <- function(input, output){
+
 
     ## ------------------------------
     ## Obtiene base de datos.
@@ -169,13 +172,29 @@ server <- function(input, output){
     ## ----------------------------------
     ## Despliega base de datos corregida
     ## ----------------------------------
-    output$out_table <- renderDataTable({
-        if(str_detect(input$states,"...") != FALSE ){
-            states <- paste0("c(",input$states,")")
-            data <- datasetInput()
-            data <- cbind(data, transform.all.col(data[,eval(parse(text = states))]))
-            data
+    output$out_table <- DT::renderDataTable({
+        data <- datasetInput()
+        if(input$s_correct == TRUE){
+            ## Get analysis
+            res       <- run.a.test(data)
+            ent_cols  <- res[[2]]
+            date_cols <- res[[3]]
+
+            ## Dates
+            #for(i in date_cols){
+             #   transform_date <- lapply(data[,i], function(t) t <- transform.date(t)[[1]])
+              #  data[,i] <- ldply(transform_date, function(t)t <- t)
+            #}
+
+            ## Entities            
+            for(i in ent_cols){
+                transform_ent  <- transform.all.col(data[,i])[,1]
+                data[,i] <- transform_ent
+            }
         }
+        DT::datatable(data,
+                      options = list(scrollX = TRUE))
+      
     })
 
     ## --------------------------------
@@ -183,7 +202,7 @@ server <- function(input, output){
     ## --------------------------------
     output$report <- renderUI({
         if(input$s_report == TRUE){
-            HTML(run.a.test(datasetInput()))
+            HTML(run.a.test(datasetInput())[[1]])
         }
     })
     
@@ -200,22 +219,23 @@ server <- function(input, output){
                 paste0(input$filename, ".dbf")
             }
         },
-        content = function(file){
-            if(input$dclass == 1){
-                write.table(datasetInput(),
-                            file,
-                            sep = ",",
-                            row.names = FALSE
-                            )
-            }else if(input$dclass == 2){
-                write.xlsx(datasetInput(),
-                           file,
-                           sheetName = "Sheet1")
-            }else{
-                write.dbf(datasetInput(),
-                          file)
+
+            content = function(file){
+                if(input$dclass == 1){
+                    write.table(datasetInput(),
+                                file,
+                                sep = ",",
+                                row.names = FALSE
+                                )
+                }else if(input$dclass == 2){
+                    write.xlsx(datasetInput(),
+                               file,
+                               sheetName = "Sheet1")
+                }else{
+                    write.dbf(datasetInput(),
+                              file)
+                }
             }
-        }
     )   
 }
 

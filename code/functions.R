@@ -126,7 +126,7 @@ most_simil_mult <- function(char, bag){
 ###################################################
 
 ## Base with standard dates.
-date_base <- seq(as.Date("1980-01-01"),
+date_base <- seq(as.Date("1995-01-01"),
                 today(),
                 "days")
 
@@ -390,11 +390,12 @@ ident.entity <- function(col, class = "ent", thresh = .5, pres = .05){
 ##---------------------------------
 ###################################################
 run.a.test <- function(data){
+    result <- list()
     ents <- apply(data, 2, function(t) t <- ident.entity(t, "ent"))
     ## muns <- apply(data, 2, function(t) t <- ident.entity(t, "mun"))
     ## locs <- apply(data, 2, function(t) t <- ident.entity(t, "loc"))
     date <- apply(data, 2, function(t) t <- ident.entity(t, "date"))
-    paste(
+    mssg <- paste(
         paste0("<h4>Se corrió un análisis de validación sobre la base y se  ",
                "obtuvieron los posibles tipos de datos: </h4>"),
           "<h3>Nombres de estados en las columnas: </h3>",
@@ -402,7 +403,13 @@ run.a.test <- function(data){
           "<h3>Fechas: </h3>",
           paste0("cols = ", paste(which(date == TRUE), collapse = ",")),
           sep = "<br/>"
-           )
+    )
+    cols_ents  <- which(ents == TRUE)
+    cols_dates <- which(date == TRUE)
+    result[[1]] <- mssg
+    result[[2]] <- cols_ents
+    result[[3]] <- cols_dates
+    result
 }
 
 
