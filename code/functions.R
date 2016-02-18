@@ -243,7 +243,7 @@ entities <- list(
     "32" = "Zacatecas"
 )
 
-full_ent <- read.csv("./data/coords.csv"
+full_ent <- read.csv("./data/coords.csv",
     #"http://raw.githubusercontent.com/lromang/IDMX/master/data/coords.csv",
     stringsAsFactors = FALSE,
     header = TRUE,

@@ -144,13 +144,16 @@ server <- function(input, output){
         if(input$class == 2){
             full_ent <- data.frame(read.xls(input$url, sheetIndex = 1))
         }else if(input$class == 1){
-            full_ent <- read.csv(
-                input$url,
-                stringsAsFactors = FALSE,
-                header = TRUE,
-                colClasses = rep("character", 6),
-                encoding = "UTF-8"
-            )
+           ## temporaryFile <- tempfile()
+           ##download.file(input$url, destfile=temporaryFile, method="wget")
+           ## full_ent <- read.csv(
+             ##   temporaryFile,
+               ## stringsAsFactors = FALSE,
+               ## header = FALSE,
+               ## colClasses = rep("character", 6),
+               ## encoding = "UTF-8"
+               ##)
+            full_ent <- fread(input$url)
         }else{
             full_ent <- read.dbf(input$url)
         }
@@ -173,7 +176,7 @@ server <- function(input, output){
     ## Despliega base de datos corregida
     ## ----------------------------------
     output$out_table <- DT::renderDataTable({
-        data <- datasetInput()
+        data <- as.data.frame(datasetInput())
         if(input$s_correct == TRUE){
             ## Get analysis
             res       <- run.a.test(data)
