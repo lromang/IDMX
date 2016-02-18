@@ -243,8 +243,8 @@ entities <- list(
     "32" = "Zacatecas"
 )
 
-full_ent <- read.csv(
-    "https://raw.githubusercontent.com/lromang/IDMX/master/data/coords.csv",
+full_ent <- read.csv("./data/coords.csv"
+    #"http://raw.githubusercontent.com/lromang/IDMX/master/data/coords.csv",
     stringsAsFactors = FALSE,
     header = TRUE,
     colClasses = rep("character", 6),
@@ -500,7 +500,7 @@ get_words_wiki <- function(url){
         str_detect(links,regex)][1]
     links       <- links[str_detect(links, "/wiki/[a-z]+")]
     words       <- str_replace(links, "/wiki/", "")
-    result[[1]] <- paste0("https://en.wiktionary.org/",next_page)
+##    result[[1]] <- paste0("https://en.wiktionary.org/",next_page)
     result[[2]] <- words
     result
 }
