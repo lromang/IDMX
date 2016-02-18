@@ -133,7 +133,6 @@ ui <- dashboardPage(
 ################################
 server <- function(input, output){
 
-
     ## ------------------------------
     ## Obtiene base de datos.
     ## ------------------------------
@@ -167,8 +166,18 @@ server <- function(input, output){
          ## Despliegue de resultados.
          if(str_length(input$url) > 3){
              table <- datasetInput()
-             DT::datatable(table,
-                           options = list(scrollX = TRUE))
+             if(input$s_report != FALSE){          
+                 ents_cols <- run.a.test(table)[[2]]             
+                 DT::datatable(table,
+                               options = list(scrollX = TRUE)) %>%
+                     formatStyle(ents_cols,
+                                 ## backgroundColor = '#e57373',
+                                 color = '#ff5252',
+                                 fontWeight = 'bold')
+             }else{
+                 DT::datatable(table,
+                               options = list(scrollX = TRUE)) 
+             }
          }
      })
 
@@ -181,23 +190,31 @@ server <- function(input, output){
             ## Get analysis
             res       <- run.a.test(data)
             ent_cols  <- res[[2]]
-            date_cols <- res[[3]]
+            ## date_cols <- res[[3]]
 
             ## Dates
-            for(i in date_cols){
-                transform_date <- lapply(data[,i], function(t) t <- date_pre_proc(t)[[1]])
-                data[,i] <- ldply(transform_date, function(t)t <- t)
-            }
+            ## for(i in date_cols){
+               ## transform_date <- lapply(data[,i], function(t) t <- date_pre_proc(t)[[1]])
+               ## data[,i] <- ldply(transform_date, function(t)t <- t)
+            ## }
 
             ## Entities            
             for(i in ent_cols){
-                transform_ent  <- transform.all.col(data[,i])[,1]
-                data[,i] <- transform_ent
+                transform_ent  <- transform.all.col(data[,i])[,1:2]
+                data[,i] <- NULL
+                if(i == 1){
+                    data <- cbind(transform_ent, data)
+                }else{
+                    data <- cbind(data[,1:(i-1)], transform_ent, data[,i:ncol(data)])
+                }
             }
-        }
-        DT::datatable(data,
-                      options = list(scrollX = TRUE))
-      
+            DT::datatable(data,
+                          options = list(scrollX = TRUE)) %>%
+                formatStyle(ent_cols:(ent_cols + 1),
+                            ## backgroundColor = '#00c853',
+                            color = '#00e676',
+                            fontWeight = 'bold')
+        }      
     })
 
     ## --------------------------------
