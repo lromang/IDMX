@@ -19,8 +19,8 @@ source("./functions.R")
 ## UI
 ################################
 ui <- dashboardPage(
-    skin = "purple",
-    dashboardHeader(title = "Refinadora"),
+    ##skin = "purple",
+    dashboardHeader(title = "Validadora"),
     ## Dashboard Side Bar
     dashboardSidebar(
         sidebarMenu(
@@ -40,6 +40,40 @@ ui <- dashboardPage(
     ),
     ## Dashboard Main Body
     dashboardBody(
+        ##------------------------------------
+        tags$head(tags$style(HTML('
+        .skin-blue .main-header .logo {
+                              background-color: #4d4d4d;
+                              }
+        .skin-blue .main-header .navbar {
+                              background-color: #4d4d4d;
+                              }
+        .skin-blue .main-sidebar .sidebar .sidebar-menu .active a{
+                              background-color: #00cc99;
+                              }
+        /* main sidebar */
+        .skin-blue .main-sidebar {
+                              background-color: #4d4d4d;
+                              }
+        .content-wrapper,
+        .right-side {
+                             background-color: #757575;
+                     }
+        .nav-tabs {
+                              background-color: #bdbdbd;
+                     }
+
+        .nav-tabs-custom .nav-tabs li.active:hover a, .nav-tabs-custom .nav-tabs li.active a {
+                              background-color: #bdbdbd;
+                              border-color: #bdbdbd;
+                      }
+
+        .nav-tabs-custom .nav-tabs li.active {
+                              border-top-color: #bdbdbd;
+                      }
+                             '
+        ))),
+        ##------------------------------------
         tabItems(
             tabItem(
                 tabName = "dashboard",
@@ -51,10 +85,10 @@ ui <- dashboardPage(
                     box(
                         title       = "Base a validar",
                         width       = 3,
-                        background  = "black",
+                        ##background  = "#bdbdbd",
                         solidHeader = TRUE,
                         collapsible = TRUE,
-                        collapsed   = FALSE,
+                        collapsed   = TRUE,
                         textInput("url",label = h3("URL del archivo"), value = "url"),
                         radioButtons("class", label = h3("Tipo de archivo"),
                                      choices = list("csv" = 1, "xlsx" = 2,
@@ -71,10 +105,10 @@ ui <- dashboardPage(
                     box(
                         title       = "Descarga de base",
                         width       = 3,
-                        background  = "black",
+                        ##background  = "#bdbdbd",
                         solidHeader = TRUE,
                         collapsible = TRUE,
-                        collapsed   = FALSE,
+                        collapsed   = TRUE,
                         textInput("filename", label  = h3("Nombre archivo"),
                                   value = "archivo"),
                         radioButtons("dclass", label = h3("Formato de descarga"),
@@ -88,7 +122,7 @@ ui <- dashboardPage(
                     ## Reporte
                     ##---------------------------
                     box(
-                        background  = "black",
+                        ##background  = "#bdbdbd",
                         title       = "Reporte",
                         width       = 6,
                         solidHeader = TRUE,
@@ -101,7 +135,7 @@ ui <- dashboardPage(
                     ## Base de datos inicial
                     ##---------------------------
                     box(
-                        status      = "warning",
+                        ## status      = "warning",
                         title       = "Base de datos inicial",
                         width       = 12,
                         solidHeader = TRUE,
@@ -114,7 +148,7 @@ ui <- dashboardPage(
                     ## Base de datos final
                     ##---------------------------
                     box(
-                        status      = "info",
+                        ## status      = "info",
                         title       = "Base de datos final",
                         width       = 12,
                         solidHeader = TRUE,
@@ -164,8 +198,18 @@ server <- function(input, output){
          ## Despliegue de resultados.
          if(str_length(input$url) > 3){
              table <- datasetInput()
+             if(input$s_report != TRUE){
              DT::datatable(table,
                            options = list(scrollX = TRUE))
+             }else{
+                 cols <- run.a.test(table)[[2]]
+                 DT::datatable(table,
+                               options = list(scrollX = TRUE))%>%
+                     formatStyle(cols,
+                                 color = '#c62828',
+                                 ## backgroundColor = 'orange',
+                                 fontWeight = 'bold')
+             }
          }
      })
 
@@ -173,28 +217,24 @@ server <- function(input, output){
     ## Despliega base de datos corregida
     ## ----------------------------------
     output$out_table <- DT::renderDataTable({
-        data <- datasetInput()
-        if(input$s_correct == TRUE){
-            ## Get analysis
-            res       <- run.a.test(data)
-            ent_cols  <- res[[2]]
-            date_cols <- res[[3]]
+        if(str_length(input$url) > 3){
+            data <- datasetInput()        
+            if(input$s_correct == TRUE){
+                ## Get analysis
+                res       <- run.a.test(data)
+                ent_cols  <- res[[2]][1]
+                date_cols <- res[[3]]
 
-            ## Dates
-            #for(i in date_cols){
-             #   transform_date <- lapply(data[,i], function(t) t <- transform.date(t)[[1]])
-              #  data[,i] <- ldply(transform_date, function(t)t <- t)
-            #}
-
-            ## Entities            
-            for(i in ent_cols){
-                transform_ent  <- transform.all.col(data[,i])[,1]
-                data[,i] <- transform_ent
+                ## Entities            
+                transform_ent  <- transform.all.col(data[,ent_cols])[,1:2]
+                data <- cbind(transform_ent, data)
+                DT::datatable(data,
+                              options = list(scrollX = TRUE)) %>%
+                    formatStyle(1:2,
+                                color = '#00cc99',
+                                fontWeight = 'bold')
             }
         }
-        DT::datatable(data,
-                      options = list(scrollX = TRUE))
-      
     })
 
     ## --------------------------------

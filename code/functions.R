@@ -392,6 +392,7 @@ ident.entity <- function(col, class = "ent", thresh = .5, pres = .05){
 run.a.test <- function(data){
     result <- list()
     ents <- apply(data, 2, function(t) t <- ident.entity(t, "ent"))
+
     ## muns <- apply(data, 2, function(t) t <- ident.entity(t, "mun"))
     ## locs <- apply(data, 2, function(t) t <- ident.entity(t, "loc"))
     ## date <- apply(data, 2, function(t) t <- ident.entity(t, "date"))
