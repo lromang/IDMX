@@ -40,8 +40,9 @@ ui <- dashboardPage(
     ),
     ## Dashboard Main Body
     dashboardBody(
-        ##------------------------------------
-        tags$head(tags$style(HTML('
+        tags$head(
+                tags$style(
+                        HTML('
         .skin-blue .main-header .logo {
                               background-color: #4d4d4d;
                               }
@@ -51,7 +52,6 @@ ui <- dashboardPage(
         .skin-blue .main-sidebar .sidebar .sidebar-menu .active a{
                               background-color: #00cc99;
                               }
-        /* main sidebar */
         .skin-blue .main-sidebar {
                               background-color: #4d4d4d;
                               }
@@ -70,10 +70,10 @@ ui <- dashboardPage(
 
         .nav-tabs-custom .nav-tabs li.active {
                               border-top-color: #bdbdbd;
-                      }
-                             '
-        ))),
-        ##------------------------------------
+                      }'
+                      )               
+               )
+        ),
         tabItems(
             tabItem(
                 tabName = "dashboard",
@@ -84,8 +84,7 @@ ui <- dashboardPage(
                     ##---------------------------
                     box(
                         title       = "Base a validar",
-                        width       = 3,
-                        ##background  = "#bdbdbd",
+                        width       = 3,                       
                         solidHeader = TRUE,
                         collapsible = TRUE,
                         collapsed   = TRUE,
@@ -105,7 +104,6 @@ ui <- dashboardPage(
                     box(
                         title       = "Descarga de base",
                         width       = 3,
-                        ##background  = "#bdbdbd",
                         solidHeader = TRUE,
                         collapsible = TRUE,
                         collapsed   = TRUE,
@@ -122,7 +120,6 @@ ui <- dashboardPage(
                     ## Reporte
                     ##---------------------------
                     box(
-                        ##background  = "#bdbdbd",
                         title       = "Reporte",
                         width       = 6,
                         solidHeader = TRUE,
@@ -134,8 +131,7 @@ ui <- dashboardPage(
                     ##---------------------------
                     ## Base de datos inicial
                     ##---------------------------
-                    box(
-                        ## status      = "warning",
+                    box(                        
                         title       = "Base de datos inicial",
                         width       = 12,
                         solidHeader = TRUE,
@@ -206,8 +202,7 @@ server <- function(input, output){
                  DT::datatable(table,
                                options = list(scrollX = TRUE))%>%
                      formatStyle(cols,
-                                 color = '#c62828',
-                                 ## backgroundColor = 'orange',
+                                 color = '#c62828',                        
                                  fontWeight = 'bold')
              }
          }
@@ -223,12 +218,11 @@ server <- function(input, output){
                 ## Get analysis
                 res       <- run.a.test(data)
                 ent_cols  <- res[[2]][1]
-                date_cols <- res[[3]]
 
                 ## Entities            
-                transform_ent  <- transform.all.col(data[,ent_cols])[,1:2]
-                data <- cbind(transform_ent, data)
-                DT::datatable(data,
+                transform_ent  <- transform.all.col(data[,ent_cols], "ent")[,1:2]
+                data_final     <- cbind(transform_ent, data)
+                DT::datatable(data_final,
                               options = list(scrollX = TRUE)) %>%
                     formatStyle(1:2,
                                 color = '#00cc99',
