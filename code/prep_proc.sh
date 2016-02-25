@@ -4,44 +4,27 @@
 # -----------------------
 # Download file
 # -----------------------
-# IF xlsx convert to csv
-# -----------------------
 wget  $1 --output-document tmp.csv
+
+# Llevar registro antes y después de modificaciones
+cp tmp.csv tmp1.csv
 
 # -----------------------
 # Correct encoding
 # -----------------------
 encode=$(file -i tmp.csv | awk -F '=' '{print $2}')
-file="correct_tmp.csv"
-iconv -f $encode -t utf8 tmp.csv > $file
+file="correct_file.csv"
+iconv -f $encode -t utf8 tmp.csv | grep -vE '^$' | sed -r 's/(\$[0-9]+,[0-9]+)/"\1"/g' > $file
+ssconvert $file $file
 
 # -----------------------
 # Metadata display
 # -----------------------
-echo "#--------------------"             > metadata.txt
-echo "Metadatos:"                        >> metadata.txt
-echo "#--------------------"             >> metadata.txt
-echo -e "\n"                             >> metadata.txt
-echo "#--------------------"             >> metadata.txt
-echo "URL: "                             >> metadata.txt
-echo "#--------------------"             >> metadata.txt
-echo "$1"                                >> metadata.txt
-echo -e "\n"                             >> metadata.txt
-echo "#--------------------"             >> metadata.txt
-echo "Codificación:"                     >> metadata.txt
-echo "#--------------------"             >> metadata.txt
-echo "$encode"                           >> metadata.txt
-echo -e "\n"                             >> metadata.txt
-echo "#--------------------"             >> metadata.txt
-echo "Tamaño:"                           >> metadata.txt
-echo "#--------------------"             >> metadata.txt
-echo "   - Bytes: $(wc -c tmp.csv | sed 's/tmp.csv//g')"      >> metadata.txt
-echo "   - Caracteres: $(wc -m tmp.csv | sed 's/tmp.csv//g')" >> metadata.txt
-echo "   - Palabras: $(wc -w tmp.csv | sed 's/tmp.csv//g')"   >> metadata.txt
-echo "   - Líneas: $(wc -l tmp.csv | sed 's/tmp.csv//g')"     >> metadata.txt
-echo -e "\n"                             >> metadata.txt
+echo "{\"metadata\":[{\"URL\":\"$1\"},{\"encoding\":[{\"origin\": \"$encode\"},{\"destiny\": \"utf-8\"}]},{\"size\":[{\"bytes\":\"$(wc -c tmp.csv | sed 's/tmp.csv//g')\"},{\"characters\":\"$(wc -m tmp.csv | sed 's/tmp.csv//g')\"},{\"words\": \"$(wc -w tmp.csv | sed 's/tmp.csv//g')\"},{\"lines\": \"$(wc -l tmp.csv | sed 's/tmp.csv//g')\"}]},{\"aditional_info\":[{\"empty_lines\": \"$(cat tmp.csv | grep -E '^$' | wc -l)\"},{\"format_modifications\": \"$(diff correct_file.csv tmp1.csv | wc -l)\"}]}]}" > metadata.txt
+
 
 # -----------------------
 # Errase incorrect file
 # -----------------------
 rm tmp.csv
+rm tmp1.csv
