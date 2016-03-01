@@ -413,6 +413,14 @@ run.a.test <- function(data){
     result
 }
 
+####################################################
+## Parse JSON
+####################################################
+parse_json <- function(url){
+querie <- paste0('http://fractal-api.fractal.ai/?expr=(validate"', url,'"')
+meta    <- RJSONIO::fromJSON(getURL(querie))
+
+}
 
 
 
