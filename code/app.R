@@ -87,7 +87,7 @@ ui <- dashboardPage(
                         width       = 3,                       
                         solidHeader = TRUE,
                         collapsible = TRUE,
-                        collapsed   = TRUE,
+                        collapsed   = FALSE,
                         textInput("url",label = h3("URL del archivo"), value = "url"),
                         radioButtons("class", label = h3("Tipo de archivo"),
                                      choices = list("csv" = 1, "xlsx" = 2,
@@ -106,7 +106,7 @@ ui <- dashboardPage(
                         width       = 3,
                         solidHeader = TRUE,
                         collapsible = TRUE,
-                        collapsed   = TRUE,
+                        collapsed   = FALSE,
                         textInput("filename", label  = h3("Nombre archivo"),
                                   value = "archivo"),
                         radioButtons("dclass", label = h3("Formato de descarga"),
@@ -124,7 +124,7 @@ ui <- dashboardPage(
                         width       = 6,
                         solidHeader = TRUE,
                         collapsible = TRUE,
-                        collapsed   = TRUE,
+                        collapsed   = FALSE,
                         htmlOutput("report")
                     ),
 
